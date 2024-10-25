@@ -5,10 +5,8 @@ const bcrypt = require('bcryptjs');
 const verifyOtp=require('../utils/verifyOtp')
 const { sendErrorResponse } = require('../utils/responseHelper');
 const axios = require('axios');
-const { sendOtp } = require('../utils/sentOtp');
-
-const { sendOtp } = require('../utils/sentOtp');
-const { verifyOtp } = require('../utils/verifyOtp');
+const sendOtp  = require('../utils/sentOtp');
+const verifyOtp  = require('../utils/verifyOtp');
 
 const register = async (req, res) => {
     try {
