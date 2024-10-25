@@ -4,6 +4,15 @@ const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    avatar:{type:String},
+    isVarified:{
+        type:Boolean,
+        default:false
+    },
+    expirationDate: {
+        type: Date,
+        default: () => Date.now() + 10 * 60 * 1000,
+      },
     tokens: [
         {
             token: { type: String },
