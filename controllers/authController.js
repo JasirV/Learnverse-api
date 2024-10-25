@@ -1,8 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
-
-const verifyOtp=require('../utils/verifyOtp')
 const { sendErrorResponse } = require('../utils/responseHelper');
 const axios = require('axios');
 const sendOtp  = require('../utils/sentOtp');
