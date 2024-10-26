@@ -6,6 +6,7 @@ const CourseSchema = new mongoose.Schema({
     description: { type: String, required: true },
     duration: { type: String },
     category: { type: String },
+    auther:{type:mongoose.Schema.Types.ObjectId,ref:"User"},
     chapters: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Chapter' }]
 }, { timestamps: true });
 

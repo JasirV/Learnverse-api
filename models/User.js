@@ -6,8 +6,10 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     avatar:{type:String},
     isVarified:{
-        type:Boolean,
-        default:false
+        type:Boolean, 
+        default:false 
+    },otp:{
+
     },
     expirationDate: {
         type: Date,

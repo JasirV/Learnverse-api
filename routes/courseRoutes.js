@@ -1,12 +1,13 @@
 const express  =require('express')
-const {createCourse,getCourses, updateCourse, deleteCourse}=require('../controllers/courseController')
+const {createCourse,getCourses, updateCourse, deleteCourse, myCourse}=require('../controllers/courseController')
 const authMiddleware = require('../middleware/authMiddleware')
 const routes=express.Router()
 
 
 routes.post('/',authMiddleware,createCourse)
 .get('/',getCourses)
-.put('/:id',updateCourse)
-.delete('/:id',deleteCourse)
+.get('/mycourse',authMiddleware,myCourse)
+.put('/:id',authMiddleware,updateCourse)
+.delete('/:id',authMiddleware,deleteCourse)
 
 module.exports=routes

@@ -5,33 +5,33 @@ const { sendErrorResponse } = require('../utils/responseHelper');
 const axios = require('axios');
 const sendOtp  = require('../utils/sentOtp');
 const verifyOtp  = require('../utils/verifyOtp');
+const generateToken = require('../utils/generateToken');
 
 const register = async (req, res) => {
+    console.log('Request body:', req.body);
     try {
         const { username, email, password } = req.body;
+
+        // Check if user already exists
         const existingUser = await User.findOne({ email });
+        console.log('Existing user:', existingUser);
 
         if (existingUser) {
             if (existingUser.isVarified) {
                 return res.status(400).json({ message: 'User already exists' });
             } else {
-                // Resend OTP to the existing user
-                const otp = await sendOtp(email);
-                existingUser.otp = otp;
-                existingUser.otpExpires = Date.now() + 15 * 60 * 1000; // OTP valid for 15 minutes
-                await existingUser.save();
-                return res.status(200).json({ message: 'OTP resent', otp: existingUser.otp });
+                const otpResponse = await sendOtp(existingUser);
+                return res.status(200).json({ message: otpResponse.message, otp: otpResponse.otp });
             }
         }
-
-        // Create new user and send OTP
-        const otp = await sendOtp(email);
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new User({ username, email, password: hashedPassword, otp, otpExpires: Date.now() + 15 * 60 * 1000 });
+        const user = new User({ username, email, password: hashedPassword, otpExpires: Date.now() + 15 * 60 * 1000 });
         await user.save();
+        const otpResponse = await sendOtp(user);
 
-        res.status(201).json({ message: 'User registered successfully. Check your email for the OTP.', otp });
+        res.status(201).json({ message: 'User registered successfully. Check your email for the OTP.', otp: otpResponse.otp });
     } catch (error) {
+        console.error('Error registering user:', error);
         res.status(500).json({ message: 'Error registering user', error: error.message });
     }
 };
@@ -39,23 +39,26 @@ const verifyUserOtp = async (req, res) => {
     try {
         const { email, otp } = req.body;
         const user = await User.findOne({ email });
+        console.log(email,otp,user,'emailotp')
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-
-        // Check if OTP is valid and not expired
-        if (user.otp === otp && Date.now() < user.otpExpires) {
-            user.isVerified = true;
-            user.otp = undefined; // Clear OTP
-            user.otpExpires = undefined; // Clear expiration
-            await user.save();
-            res.status(200).json({ message: 'OTP verified successfully' });
+        const response=await verifyOtp(email,otp)
+        console.log('ress',response)
+        if (response.status==200) {
+            const userVerified = await User.findOneAndUpdate(
+                { email }, // Find user by email
+                { $set: { isVarified: true } }, // Set isVarified to true
+                { new: true } // Return the updated user
+              ).select('-password -expirationDate -createdAt -__v'); // Exclude fields              
+            const token=await generateToken(user._id)
+            return res.status(200).json({ message: 'OTP verified successfully' ,userVerified,token});
         } else {
             return res.status(400).json({ message: 'Invalid or expired OTP' });
         }
     } catch (error) {
-        res.status(500).json({ message: 'Error verifying OTP', error: error.message });
+        return res.status(500).json({ message: 'Error verifying OTP', error: error.message });
     }
 };
 

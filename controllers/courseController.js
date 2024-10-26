@@ -6,11 +6,23 @@ const {
     sendErrorResponse,
 } = require('../utils/responseHelper');
 
-// Create a new course
+// Middleware to check if the user is the course author
+const isAuthor = async (req, courseId) => {
+    const course = await Course.findById(courseId);
+    return course && course.author.toString() === req.user._id.toString();
+};
+
+// Create a new course (Only author can create)
 const createCourse = async (req, res) => {
     const { title, description, category, chapters } = req.body;
     try {
-        const course = new Course({ title, description, category, chapters });
+        const course = new Course({
+            title,
+            description,
+            category,
+            chapters,
+            author: req.user._id, // Assign the logged-in user as the author
+        });
         await course.save();
         return sendCreatedResponse(res, 'Course created successfully', course);
     } catch (error) {
@@ -18,7 +30,7 @@ const createCourse = async (req, res) => {
     }
 };
 
-// Get courses
+// Get courses (Public access)
 const getCourses = async (req, res) => {
     try {
         const { id } = req.query;
@@ -39,10 +51,16 @@ const getCourses = async (req, res) => {
     }
 };
 
-// Update a course
+// Update a course (Only author can update)
 const updateCourse = async (req, res) => {
     try {
-        const course = await Course.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const { id } = req.params;
+
+        if (!(await isAuthor(req, id))) {
+            return sendErrorResponse(res, 'Unauthorized to update this course');
+        }
+
+        const course = await Course.findByIdAndUpdate(id, req.body, { new: true });
         if (!course) {
             return sendNotFoundResponse(res, 'Course not found');
         }
@@ -52,10 +70,16 @@ const updateCourse = async (req, res) => {
     }
 };
 
-// Delete a course
+// Delete a course (Only author can delete)
 const deleteCourse = async (req, res) => {
     try {
-        const course = await Course.findByIdAndDelete(req.params.id);
+        const { id } = req.params;
+
+        if (!(await isAuthor(req, id))) {
+            return sendErrorResponse(res, 'Unauthorized to delete this course');
+        }
+
+        const course = await Course.findByIdAndDelete(id);
         if (!course) {
             return sendNotFoundResponse(res, 'Course not found');
         }
@@ -65,4 +89,17 @@ const deleteCourse = async (req, res) => {
     }
 };
 
-module.exports = { createCourse, getCourses, updateCourse, deleteCourse };
+const myCourse = async (req, res) => {
+    try {
+        const courses = await Course.find({ author: req.user._id }).populate('chapters');
+        if (courses.length === 0) {
+            return sendSuccessResponse(res, 'No courses found for this user', []);
+        }
+
+        return sendSuccessResponse(res, 'Successfully fetched user courses', courses);
+    } catch (error) {
+        return sendErrorResponse(res, error.message);
+    }
+};
+
+module.exports = {myCourse, createCourse, getCourses, updateCourse, deleteCourse };
