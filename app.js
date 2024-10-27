@@ -22,7 +22,7 @@ app.use(morgan("dev"));
 app.use('/api/auth',authRoutes)
 app.use('/api/courses',courseRouter)
 app.use('/api/chapters',chapterRouter)
-app.use('/api/topicRouter',topicRouter)
+app.use('/api/topicrouter',topicRouter)
 app.use('/api/discussions',discussionRoutes)
 
 

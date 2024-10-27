@@ -15,13 +15,14 @@ const isAuthor = async (req, courseId) => {
 // Create a new course (Only author can create)
 const createCourse = async (req, res) => {
     const { title, description, category, chapters } = req.body;
+    console.log(title,'titile',req.user)
     try {
         const course = new Course({
             title,
             description,
             category,
             chapters,
-            author: req.user._id, // Assign the logged-in user as the author
+            author: req.user._id,
         });
         await course.save();
         return sendCreatedResponse(res, 'Course created successfully', course);

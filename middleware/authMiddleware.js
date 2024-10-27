@@ -11,7 +11,6 @@ const authMiddleware = async (req, res, next) => {
         if (!user) {
             throw new Error('Authentication failed');
         }
-
         req.user = user;
         req.token = token;
         next();
